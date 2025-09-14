@@ -11,6 +11,7 @@ on:
 
 jobs:
   build:
+    # 您的 if 条件判断是正确的，予以保留
     if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
     
     runs-on: ubuntu-latest
@@ -31,6 +32,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # 关键步骤：将仓库所有者（您的用户名）转换为小写
+      - name: Convert owner to lowercase
+        id: string_ops
+        run: echo "owner_lc=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -39,8 +45,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/hug:latest
+          # 在这里使用转换后的小写用户名
+          tags: ghcr.io/${{ steps.string_ops.outputs.owner_lc }}/hugg:latest
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.description=http server
